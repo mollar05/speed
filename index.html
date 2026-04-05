@@ -89,6 +89,47 @@
             cursor: not-allowed;
             box-shadow: none;
         }
+
+        /* 결과창(모달) 스타일 추가 */
+        #result-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #1e1e1e;
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid #00ff88;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-content h1 {
+            margin-top: 0;
+            color: white;
+            font-size: 32px;
+        }
+        .tier-text {
+            font-size: 45px;
+            margin: 25px 0;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
         /* 모바일 터치 대응 */
         @media (max-width: 768px) {
             .target {
@@ -111,11 +152,27 @@
 
     <div id="game-board"></div>
 
+    <!-- 자체 결과창 (알림창 대신 사용) -->
+    <div id="result-modal">
+        <div class="modal-content">
+            <h1>훈련 종료!</h1>
+            <p style="font-size: 24px;">최종 점수: <span id="final-score" style="color: white; font-weight: bold;">0</span> 개</p>
+            <div class="tier-text" id="final-tier"></div>
+            <button id="close-modal-btn">확인</button>
+        </div>
+    </div>
+
     <script>
         const board = document.getElementById('game-board');
         const scoreDisplay = document.getElementById('score');
         const timerDisplay = document.getElementById('timer');
         const startBtn = document.getElementById('start-btn');
+
+        // 모달 관련 변수
+        const resultModal = document.getElementById('result-modal');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const finalTierDisplay = document.getElementById('final-tier');
+        const closeModalBtn = document.getElementById('close-modal-btn');
 
         let score = 0;
         let timeLeft = 60;
@@ -253,13 +310,43 @@
             board.innerHTML = '';
             startBtn.disabled = false;
             
-            // 커스텀 알림 모달 대신 간단한 alert 사용 (요청에 따라)
-            setTimeout(() => {
-                alert(`훈련 종료!\n최종 점수: ${score}\n수고하셨습니다, 요원.`);
-            }, 100);
+            // 점수에 따른 티어 계산
+            let rank = "";
+            let emoji = "";
+
+            if (score < 30) {
+                rank = "브론즈";
+                emoji = "🥉";
+            } else if (score < 50) {
+                rank = "아이언";
+                emoji = "⚙️";
+            } else if (score < 60) {
+                rank = "골드";
+                emoji = "🥇";
+            } else if (score < 70) {
+                rank = "다이야";
+                emoji = "💎";
+            } else if (score < 80) {
+                rank = "플로틀럼";
+                emoji = "💠";
+            } else if (score < 100) {
+                rank = "에메랄두";
+                emoji = "❇️";
+            } else {
+                rank = "고인물";
+                emoji = "👑";
+            }
+
+            // 막힐 수 있는 alert 대신 자체 결과창(모달) 표시
+            finalScoreDisplay.innerText = score;
+            finalTierDisplay.innerText = `[ ${rank} ${emoji} ]`;
+            resultModal.style.display = 'flex';
         }
 
         startBtn.addEventListener('click', startGame);
+        closeModalBtn.addEventListener('click', () => {
+            resultModal.style.display = 'none'; // 확인 버튼 누르면 창 닫기
+        });
 
         // 오답(배경) 클릭 시 패널티(선택 사항) 또는 시각 효과 추가 가능
         /*
